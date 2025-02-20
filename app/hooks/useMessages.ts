@@ -7,6 +7,16 @@ export function useMessages(activeConversationId: string | null, newMessage?: st
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Add getMessages function that uses StoreService
+  const getMessages = async (conversationId: string) => {
+    try {
+      return await StoreService.fetchMessages(conversationId);
+    } catch (err) {
+      console.error('Error fetching messages:', err);
+      throw err;
+    }
+  };
+
   // Effect to handle new messages
   useEffect(() => {
     if (newMessage && activeConversationId) {
@@ -80,6 +90,7 @@ export function useMessages(activeConversationId: string | null, newMessage?: st
     messages,
     loading,
     error,
+    getMessages,
     send,
     clear: () => setMessages([])
   };
