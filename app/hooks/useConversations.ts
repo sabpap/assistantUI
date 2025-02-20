@@ -40,5 +40,15 @@ export function useConversations() {
     }
   };
 
-  return { conversations, loading, error, create, rename };
+  const deleteConversation = async (id: string) => {
+    try {
+      await StoreService.deleteConversation(id);
+      setConversations((prev) => prev.filter((conv) => conv.id !== id));
+    } catch (err) {
+      console.error("Failed to delete conversation:", err);
+      throw err;
+    }
+  };
+
+  return { conversations, loading, error, create, rename, deleteConversation };
 }

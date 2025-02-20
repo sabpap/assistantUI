@@ -5,11 +5,11 @@ import { useConversations } from "../hooks/useConversations";
 
 type ConversationListProps = {
   activeConversationId: string | null
-  onSelectConversation?: (id: string) => void
+  onSelectConversation?: (id: string | null) => void
 }
 
 export default function ConversationList({ activeConversationId, onSelectConversation }: ConversationListProps) {
-  const { conversations, loading, error, create } = useConversations();
+  const { conversations, loading, error, create, deleteConversation } = useConversations();
 
   const handleNewChat = async () => {
     try {
@@ -17,6 +17,18 @@ export default function ConversationList({ activeConversationId, onSelectConvers
       onSelectConversation?.(newConversation.id);
     } catch (error) {
       console.error("Failed to create new chat:", error);
+    }
+  };
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await deleteConversation(id);
+      if (id === activeConversationId) {
+        onSelectConversation?.(null);
+      }
+    } catch (error) {
+      console.error("Failed to delete conversation:", error);
     }
   };
 
@@ -56,7 +68,12 @@ export default function ConversationList({ activeConversationId, onSelectConvers
               {conv.name}
             </Button>
             <div className="absolute right-2 top-1/2 transform -translate-y-1/2 hidden group-hover:flex space-x-1">
-              <Button variant="ghost" size="icon" className="w-6 h-6 p-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="w-6 h-6 p-0"
+                onClick={(e) => handleDelete(conv.id, e)}
+              >
                 <Trash className="w-4 h-4 text-gray-500" />
               </Button>
               <Button variant="ghost" size="icon" className="w-6 h-6 p-0">
