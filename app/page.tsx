@@ -62,7 +62,7 @@ export default function Home() {
           <div className="w-full sm:w-[60%] mx-auto flex flex-col p-4">
             {!activeConversationId && !conversationsLoading ? (
               <div className="flex-1 flex items-center justify-center text-gray-500">
-                Create a new conversation to get started
+                Create a new chat to get started
               </div>
             ) : (
               <ChatMessages

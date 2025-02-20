@@ -30,7 +30,7 @@ export const StoreLocalStorage: Store = {
     const conversations = JSON.parse(localStorage.getItem("conversations") || "[]");
     const newConversation: Conversation = {
       id: crypto.randomUUID(),
-      name: "New Conversation",
+      name: "Chat #" + (conversations.length + 1),
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
       messages: [],

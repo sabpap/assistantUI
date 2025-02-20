@@ -34,7 +34,7 @@ export default function ConversationList({ activeConversationId, onSelectConvers
 
   return (
     <div className="w-72 md:64 h-full bg-gray-100 p-4 overflow-y-auto border-r border-gray-200">
-      <h2 className="px-4 py-2 text-lg font-semibold mb-4 text-gray-700">Conversations</h2>
+      <h2 className="px-4 py-2 text-lg font-semibold mb-4 text-gray-700">Chat History</h2>
       <Button
         variant="outline"
         className="w-full mb-4 flex items-center justify-start"
@@ -48,7 +48,7 @@ export default function ConversationList({ activeConversationId, onSelectConvers
           <div key={conv.id} className="relative group">
             <Button
               variant="ghost"
-              className={`w-full justify-start text-gray-600 hover:bg-gray-200 hover:text-gray-900 ${
+              className={`w-full justify-start text-gray-600 hover:bg-gray-200 hover:text-gray-900 font-semibold ${
                 conv.id === activeConversationId ? "bg-gray-200" : ""
               }`}
               onClick={() => onSelectConversation?.(conv.id)}
