@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Share, Trash } from "lucide-react";
+import { Check, Plus, Share, Trash, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useConversations } from "../hooks/useConversations";
 import { useMessages } from "../hooks/useMessages";
@@ -11,13 +11,15 @@ type ConversationListProps = {
 }
 
 export default function ConversationList({ activeConversationId, onSelectConversation }: ConversationListProps) {
-  const { conversations, loading, error, create, deleteConversation } = useConversations();
+  const { conversations, loading, error, create, deleteConversation, rename } = useConversations();
   const [toast, setToast] = useState<ToastState>({
     message: '',
     type: 'success',
     show: false
   });
   const { getMessages } = useMessages(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
 
   const handleNewChat = async () => {
     try {
@@ -93,6 +95,48 @@ export default function ConversationList({ activeConversationId, onSelectConvers
     }
   };
 
+  const handleDoubleClick = (conv: Conversation) => {
+    setEditingId(conv.id);
+    setNewName(conv.name);
+  };
+
+  const handleLongPress = (conv: Conversation) => {
+    let timer: NodeJS.Timeout;
+
+    const start = () => {
+      timer = setTimeout(() => {
+        handleDoubleClick(conv);
+      }, 500); // 500ms hold time
+    };
+
+    const end = () => {
+      clearTimeout(timer);
+    };
+
+    return {
+      onTouchStart: start,
+      onTouchEnd: end,
+      onMouseDown: start,
+      onMouseUp: end,
+      onMouseLeave: end,
+    };
+  };
+
+  const handleSubmitRename = async (id: string) => {
+    try {
+      await rename(id, newName);
+      setEditingId(null);
+    } catch (error) {
+      console.error("Failed to rename conversation:", error);
+      setToast({
+        message: "Failed to rename conversation",
+        type: 'error',
+        show: true
+      });
+      setTimeout(() => setToast(prev => ({ ...prev, show: false })), 3000);
+    }
+  };
+
   useEffect(() => {
     console.log("Active conversation on ConversationList mount:", activeConversationId);
   }, [activeConversationId]);
@@ -119,32 +163,81 @@ export default function ConversationList({ activeConversationId, onSelectConvers
       <div className="space-y-2">
         {conversations.map((conv) => (
           <div key={conv.id} className="relative group">
-            <Button
-              variant="ghost"
-              className={`w-full justify-start text-gray-600 hover:bg-gray-200 hover:text-gray-900 font-semibold ${
-                conv.id === activeConversationId ? "bg-gray-200" : ""
-              }`}
-              onClick={() => onSelectConversation?.(conv.id)}
-            >
-              {conv.name}
-            </Button>
+            {editingId === conv.id ? (
+              <div className="flex items-center relative">
+                <input
+                  type="text"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value.slice(0, 100))}
+                  className="w-full p-2 pr-16 rounded border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                  onBlur={(e) => {
+                    const relatedTarget = e.relatedTarget as HTMLElement;
+                    if (!relatedTarget?.closest('.rename-actions')) {
+                      setEditingId(null);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleSubmitRename(conv.id);
+                    } else if (e.key === 'Escape') {
+                      setEditingId(null);
+                    }
+                  }}
+                />
+                <div className="absolute right-2 flex space-x-1 rename-actions">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-6 h-6 hover:bg-green-100"
+                    onClick={() => handleSubmitRename(conv.id)}
+                  >
+                    <Check className="w-4 h-4 text-green-600" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-6 h-6 hover:bg-red-100"
+                    onClick={() => setEditingId(null)}
+                  >
+                    <X className="w-4 h-4 text-red-600" />
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <Button
+                variant="ghost"
+                className={`w-full justify-start text-gray-600 hover:bg-gray-200 hover:text-gray-900 font-semibold ${
+                  conv.id === activeConversationId ? "bg-gray-200" : ""
+                }`}
+                onClick={() => onSelectConversation?.(conv.id)}
+                onDoubleClick={() => handleDoubleClick(conv)}
+                {...handleLongPress(conv)}
+              >
+                {conv.name}
+              </Button>
+            )}
             <div className="absolute right-2 top-1/2 transform -translate-y-1/2 hidden group-hover:flex space-x-1">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-6 h-6 p-0"
-                onClick={(e) => handleDelete(conv.id, e)}
-              >
-                <Trash className="w-4 h-4 text-gray-500" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="w-6 h-6 p-0"
-                onClick={(e) => handleExport(conv.id, e)}
-              >
-                <Share className="w-4 h-4 text-gray-500" />
-              </Button>
+              {editingId !== conv.id && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-6 h-6 p-0"
+                    onClick={(e) => handleDelete(conv.id, e)}
+                  >
+                    <Trash className="w-4 h-4 text-gray-500" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="w-6 h-6 p-0"
+                    onClick={(e) => handleExport(conv.id, e)}
+                  >
+                    <Share className="w-4 h-4 text-gray-500" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         ))}
