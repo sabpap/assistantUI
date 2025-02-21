@@ -16,9 +16,24 @@ export default function ChatMessages({ conversationId }: ChatMessagesProps) {
   const [likeStates, setLikeStates] = useState<{ [key: string]: "like" | "dislike" | null }>({})
   const [newMessage, setNewMessage] = useState<string | undefined>();
   const [pendingReply, setPendingReply] = useState(false);
-  const { messages, loading: isLoading } = useMessages(conversationId, newMessage);
+  const {
+    messages,
+    loading: isLoading,
+    ephemeralMessage,
+    displayedText,
+    isTypingComplete,
+    shouldScroll,
+    setShouldScroll
+  } = useMessages(conversationId, newMessage);
   const [showToast, setShowToast] = useState(false);
   const downloadTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    if (shouldScroll) {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      setShouldScroll(false);
+    }
+  }, [shouldScroll, setShouldScroll, displayedText]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -178,6 +193,50 @@ export default function ChatMessages({ conversationId }: ChatMessagesProps) {
             </div>
           )
         })}
+
+        {ephemeralMessage && (
+          <div key={ephemeralMessage.id}>
+            <div className="flex items-end justify-start">
+              <div className="flex flex-col group">
+                <div className="max-w-md px-4 py-2 rounded-xl relative bg-gray-100 text-gray-800">
+                  <p className="px-2 py-1">
+                    {displayedText}
+                    {!isTypingComplete && (
+                      <span className="inline-block w-1 h-4 ml-1 bg-gray-500 animate-pulse" />
+                    )}
+                  </p>
+                </div>
+                {isTypingComplete && (
+                  <div className="relative">
+                    <div className="flex space-x-2 mt-1">
+                      <button
+                        onClick={() => handleLikeDislike(ephemeralMessage.id.toString(), "like")}
+                        className={`p-1 rounded-md bg-transparent hover:bg-gray-200 transition-colors duration-200 border border-gray-300 ${
+                          likeStates[ephemeralMessage.id] === "like" ? "bg-green-100" : ""
+                        }`}
+                      >
+                        <ThumbsUp
+                          className={`w-3 h-3 ${likeStates[ephemeralMessage.id] === "like" ? "text-green-500" : "text-gray-500"}`}
+                        />
+                      </button>
+                      <button
+                        onClick={() => handleLikeDislike(ephemeralMessage.id.toString(), "dislike")}
+                        className={`p-1 rounded-md bg-transparent hover:bg-gray-200 transition-colors duration-200 border border-gray-300 ${
+                          likeStates[ephemeralMessage.id] === "dislike" ? "bg-red-100" : ""
+                        }`}
+                      >
+                        <ThumbsDown
+                          className={`w-3 h-3 ${likeStates[ephemeralMessage.id] === "dislike" ? "text-red-500" : "text-gray-500"}`}
+                        />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div ref={messagesEndRef} />
       </div>
       <ChatInput

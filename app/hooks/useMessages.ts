@@ -6,6 +6,10 @@ export function useMessages(activeConversationId: string | null, newMessage?: st
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ephemeralMessage, setEphemeralMessage] = useState<Message | null>(null);
+  const [displayedText, setDisplayedText] = useState("");
+  const [isTypingComplete, setIsTypingComplete] = useState(false);
+  const [shouldScroll, setShouldScroll] = useState(false);
 
   // Add getMessages function that uses StoreService
   const getMessages = async (conversationId: string) => {
@@ -69,8 +73,8 @@ export function useMessages(activeConversationId: string | null, newMessage?: st
 
       const { content: assistantReply } = await response.json();
 
-      // Create and save the assistant message
-      const assistantMessage: Message = {
+      // Create ephemeral message
+      const ephemeralAssistantMessage: Message = {
         id: crypto.randomUUID(),
         content: assistantReply,
         role: "assistant",
@@ -78,8 +82,31 @@ export function useMessages(activeConversationId: string | null, newMessage?: st
         updated_at: new Date().toISOString(),
       };
 
-      const updatedMessages = await StoreService.createMessage(activeConversationId, assistantMessage);
+      setEphemeralMessage(ephemeralAssistantMessage);
+      setDisplayedText("");
+      setIsTypingComplete(false);
+
+      // Improved typing effect with proper delays
+      const typeCharacter = async (text: string, index: number) => {
+        if (index <= text.length) {
+          setDisplayedText(text.slice(0, index));
+          setShouldScroll(true); // Trigger scroll on each character
+          if (index < text.length) {
+            await new Promise(resolve => setTimeout(resolve, 30));
+            await typeCharacter(text, index + 1);
+          } else {
+            setIsTypingComplete(true);
+          }
+        }
+      };
+
+      // Start the typing effect
+      await typeCharacter(assistantReply, 0);
+
+      // Save the message to storage after typing is complete
+      const updatedMessages = await StoreService.createMessage(activeConversationId, ephemeralAssistantMessage);
       setMessages(updatedMessages);
+      setEphemeralMessage(null);
     } catch (err) {
       console.error("Failed to send message:", err);
       throw err;
@@ -92,6 +119,11 @@ export function useMessages(activeConversationId: string | null, newMessage?: st
     error,
     getMessages,
     send,
-    clear: () => setMessages([])
+    clear: () => setMessages([]),
+    ephemeralMessage,
+    displayedText,
+    isTypingComplete,
+    shouldScroll,
+    setShouldScroll,
   };
 }
