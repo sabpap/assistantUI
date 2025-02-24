@@ -11,6 +11,7 @@ export function useMessages(activeConversationId: string | null, newMessage?: st
   const [isTypingComplete, setIsTypingComplete] = useState(false);
   const [shouldScroll, setShouldScroll] = useState(false);
 
+
   // Add getMessages function that uses StoreService
   const getMessages = async (conversationId: string) => {
     try {
@@ -64,14 +65,19 @@ export function useMessages(activeConversationId: string | null, newMessage?: st
       const newMessages = await StoreService.createMessage(activeConversationId, tempUserMessage);
       setMessages(newMessages);
 
-      // Fetch the assistant's reply
+      // Make request to our Next.js API route instead of directly to external service
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: newMessages }),
+        body: JSON.stringify({ query: content, conversation: newMessages })
       });
 
-      const { content: assistantReply } = await response.json();
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      const assistantReply = data.res;
 
       // Create ephemeral message
       const ephemeralAssistantMessage: Message = {
@@ -86,14 +92,18 @@ export function useMessages(activeConversationId: string | null, newMessage?: st
       setDisplayedText("");
       setIsTypingComplete(false);
 
-      // Improved typing effect with proper delays
+      // Improved typing effect with adaptive speed
       const typeCharacter = async (text: string, index: number) => {
         if (index <= text.length) {
           setDisplayedText(text.slice(0, index));
-          setShouldScroll(true); // Trigger scroll on each character
+          setShouldScroll(true);
+
           if (index < text.length) {
-            await new Promise(resolve => setTimeout(resolve, 30));
-            await typeCharacter(text, index + 1);
+            // Faster typing speed (reduced from 30ms to 15ms)
+            // For longer messages, increase the speed even more
+            const delay = text.length > 100 ? 10 : 15;
+            await new Promise(resolve => setTimeout(resolve, delay));
+            await typeCharacter(text, index + (text.length > 200 ? 2 : 1)); // Skip characters for very long messages
           } else {
             setIsTypingComplete(true);
           }
