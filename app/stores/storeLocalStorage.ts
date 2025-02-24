@@ -48,9 +48,10 @@ export const StoreLocalStorage: Store = {
   },
 
   async deleteConversation(id: string): Promise<void> {
+    localStorage.removeItem(`messages-${id}`);
     const conversations = JSON.parse(localStorage.getItem("conversations") || "[]");
-    const updated = conversations.filter((conv: Conversation) => conv.id !== id);
-    localStorage.setItem("conversations", JSON.stringify(updated));
+    const updatedConversations = conversations.filter((conv: Conversation) => conv.id !== id);
+    localStorage.setItem("conversations", JSON.stringify(updatedConversations));
   },
 
   async editMessage(messageId: string, newContent: string): Promise<Message> {
