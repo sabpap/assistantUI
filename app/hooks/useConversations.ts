@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { config } from "../config";
 import { StoreService } from "../stores/index";
 import { Conversation } from "../types";
+
 
 export function useConversations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -22,6 +24,16 @@ export function useConversations() {
       const newConversation = await StoreService.createConversation();
       console.log("created newConversation", newConversation);
       setConversations((prev) => [newConversation, ...prev]);
+
+      if (config.appIntroMessage) {
+        await StoreService.createMessage(newConversation.id, {
+          id: crypto.randomUUID(),
+          content: config.appIntroMessage,
+          role: "assistant",
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
+      }
       return newConversation;
     } catch (err) {
       console.error("Failed to create conversation:", err);

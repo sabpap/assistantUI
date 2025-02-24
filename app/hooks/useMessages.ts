@@ -22,6 +22,12 @@ export function useMessages(activeConversationId: string | null, newMessage?: st
     }
   };
 
+  const typeCharacter = async (text: string, index: number) => {
+    if (index <= text.length) {
+      setDisplayedText(text.slice(0, index));
+      setShouldScroll(true);
+    }
+  };
   // Effect to handle new messages
   useEffect(() => {
     if (newMessage && activeConversationId) {
