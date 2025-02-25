@@ -11,7 +11,4 @@ export const config = {
 
   appTitle: process.env.NEXT_PUBLIC_APP_TITLE || "AssistantChatApp",
   appIntroMessage: process.env.NEXT_PUBLIC_APP_INTRO_MESSAGE || "Hello, I'm the Assistant. How can I help you today?",
-  chatApiEndpoint: process.env.NEXT_PUBLIC_CHAT_API_ENDPOINT || "http://localhost:3000/api/chat",
-  chatApiMethod: process.env.NEXT_PUBLIC_CHAT_API_METHOD || "POST",
-  chatApiToken: process.env.NEXT_PUBLIC_CHAT_API_TOKEN || "",
 }

@@ -1,4 +1,3 @@
-import { config } from "@/app/config"; // Import the config
 import { NextResponse } from 'next/server';
 
 export const runtime = "edge";
@@ -6,12 +5,16 @@ export const runtime = "edge";
 export async function POST(req: Request) {
     const { query, conversation } = await req.json();
 
+    const chatApiEndpoint = process.env.CHAT_API_ENDPOINT
+    const chatApiMethod = process.env.CHAT_API_METHOD
+    const chatApiToken = process.env.CHAT_API_TOKEN || "";
+
     // Prepare headers
     const headers: Record<string, string> = {
         'Content-Type': 'application/json'
     };
-    if (config.chatApiToken) {
-        headers['Service-Token'] = config.chatApiToken;
+    if (chatApiToken) {
+        headers['Service-Token'] = chatApiToken;
     }
 
     // Format conversation for the API
@@ -22,8 +25,8 @@ export async function POST(req: Request) {
 
     try {
         // Make the HTTP request to the external service
-        const response = await fetch(config.chatApiEndpoint, {
-            method: config.chatApiMethod,
+        const response = await fetch(chatApiEndpoint, {
+            method: chatApiMethod,
             headers: headers,
             body: JSON.stringify({
                 query: query,
